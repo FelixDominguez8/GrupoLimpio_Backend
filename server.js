@@ -110,7 +110,6 @@ app.post('/update', async(req, res) =>{
 
 app.post('/registrar', (req, res) =>{
     const {parcel} = req.body
-    console.log(parcel)
     if(!parcel){
         return res.status(400).send({status: 'failed'});
     }
@@ -132,8 +131,6 @@ app.post('/submit', (req, res) => {
 app.post("/createUser", (req,res) => {
     const correo = req.body.correo;
     const password = req.body.password;
-    console.log(correo);
-    console.log(password)
     const auth = getAuth();
     createUserWithEmailAndPassword(auth, correo, password)
     .then((userCredential) => {
@@ -165,7 +162,6 @@ app.post("/logIn",(req,res)=>{
     signInWithEmailAndPassword(auth, correo, password)
     .then((userCredential) => {
         const user = userCredential.user;
-        console.log("Hola");
         const responseData = { message: 'Holas'};
         res.json(responseData);
     })
@@ -184,11 +180,9 @@ app.post('/CargarPerfil', async (req, res) => {
     try{
         const userRef = db.collection("infousuario").doc(req.body.id);
         const response = await userRef.get();
-        console.log("Holas");
         console.log(response.data());
         res.send(response.data());
     } catch(error) {
-        console.log("Holas2");
         res.send(error);
     }
 })
@@ -196,7 +190,6 @@ app.post('/CargarPerfil', async (req, res) => {
 app.post('/Actualizar', async(req, res) =>{
     try{
         const correo=req.body.correo;
-        console.log("Holax");
         const userRef = await db.collection("infousuario").doc(correo)
         .update({
             nombre: req.body.nombre,
@@ -259,3 +252,17 @@ app.post("/retorePassword"), async(req,res) =>{
         console.log(errorMessage);
     });
 }
+
+app.get("/logOut",(req,res)=>{
+    const auth = getAuth();
+    signOut(auth).then(()=>{
+        res.status(200).send({
+            "msg":"log out",
+        })
+    }).catch((error) => {
+        res.status(500).send({
+            "msg":"error log out",
+            "data":error
+        })
+    })
+})
