@@ -149,8 +149,7 @@ app.post("/createUser", (req,res) => {
         const errorCode = error.code;
         const errorMessage = error.message;
         res.status(500).send({
-            "msg":"El usuario no se pudo crear",
-            "data":error,
+            "Error":error.code
         })
     })
 })
@@ -179,6 +178,17 @@ app.post("/logIn",(req,res)=>{
 app.post('/CargarPerfil', async (req, res) => {
     try{
         const userRef = db.collection("infousuario").doc(req.body.id);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/CargarPerfilAdmin', async (req, res) => {
+    try{
+        const userRef = db.collection("infoadmin").doc(req.body.id);
         const response = await userRef.get();
         console.log(response.data());
         res.send(response.data());
@@ -238,20 +248,27 @@ app.post("/updatePassword", async(req,res)=>{
     });
 })
 
-app.post("/retorePassword"), async(req,res) =>{
+app.post("/restorePassword", async(req,res) =>{
     const auth = getAuth();
     console.log(req.body.correo);
     console.log("Hola");
     sendPasswordResetEmail(auth, req.body.correo)
     .then(() => {
-        console.log("Correo enviado")
+        res.status(200).send({
+            "msg":"Todo bien",
+        });
+        console.log("Correo enviado");
     })
     .catch((error) => {
+        res.status(500).send({
+            "msg":"Todo mal",
+        });
+        console.log("Hola2");
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorMessage);
     });
-}
+})
 
 app.get("/logOut",(req,res)=>{
     const auth = getAuth();
@@ -265,4 +282,15 @@ app.get("/logOut",(req,res)=>{
             "data":error
         })
     })
+})
+
+app.post('/readAdmin', async (req, res) => {
+    try{
+        const userRef = db.collection("infoadmin").doc(req.body.correo);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+    }
 })
