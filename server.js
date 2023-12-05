@@ -6,8 +6,9 @@ const bodyParser = require('body-parser');
 const { initializeApp } = require('firebase/app');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, 
     updateEmail, updatePassword, sendEmailVerification, sendPasswordResetEmail} = require('firebase/auth');
-
+const { getStorage, ref,getDownloadURL, uploadBytesResumable, uploadBytes, uploadString} = require('firebase/storage');
 const express = require("express");
+const multer = require("multer");
 
 const puerto=3001;
 
@@ -16,7 +17,6 @@ const app = express();
 app.use(cors());
 
 app.use(express.static('public'));
-app.use(express.json());
 
 const admin = require("firebase-admin");
 const credentials = require("./key.json");
@@ -27,9 +27,9 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-app.use(express.json());
+app.use(express.json({limit:'25mb'}));
 
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({limit:"25mb",extended: true}));
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -291,6 +291,80 @@ app.post('/readAdmin', async (req, res) => {
         console.log(response.data());
         res.send(response.data());
     } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/subirImagen', async (req,res) =>{
+    try{
+        const storage = getStorage();
+        console.log(req.body.imagen);
+        const imagenRef = ref(storage, 'productos/A');
+            uploadString(imagenRef, req.body.imagen,'data_url').then((snapshot) => {
+            console.log('Uploaded a raw string!');
+        });
+        // uploadBytes(imagenRef, req.body).then(() => {
+        //     console.log('Imagen subida');
+        // });
+
+    } catch(error){
+        res.send(error)
+        console.log('D: D:'+error)
+    }
+})
+
+app.post('/submitProducto', (req, res) => {
+    try{
+        const id = req.body.nombre;
+        const RegistroData = req.body;
+        console.log('Data received from frontend:', RegistroData);  
+        const response = db.collection("producto").doc(id).set(RegistroData);
+        res.send(response);
+    }catch(error){
+        res.send(error);
+    }
+});
+
+app.get('/selectProductos', async (req, res) => {
+    try{
+        const userRef = db.collection("producto");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarProducto', async(req, res) =>{
+    try{
+        const nombre=req.body.nombre;
+        const userRef = await db.collection("producto").doc(nombre)
+        .update({
+            nombre: req.body.nombre,
+            categoria: req.body.categoria,
+            marca: req.body.marca,
+            imagen: req.body.imagen,
+            precio: req.body.precio,
+            cantidad: req.body.cantidad,
+        });
+        const response = await userRef.get();
+        res.send(response.data())
+    }catch(error){
+        console.log("Malo"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarProducto', async(req, res) =>{
+    try{
+        const response = await db.collection("producto").doc(req.body.nombre).delete();
+        res.send(response.data())
+    }catch(error){
+        console.log("Malo:D"+error)
         res.send(error);
     }
 })
