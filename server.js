@@ -315,15 +315,91 @@ app.post('/subirImagen', async (req,res) =>{
 
 app.post('/submitProducto', (req, res) => {
     try{
-        const id = req.body.nombre;
         const RegistroData = req.body;
-        console.log('Data received from frontend:', RegistroData);  
-        const response = db.collection("producto").doc(id).set(RegistroData);
-        res.send(response);
+        const response = db.collection("producto").doc();
+        response.set(RegistroData);
+        response.update({id: response.id});
+        const jsonid = {id: response.id};
+        res.send(jsonid);
     }catch(error){
         res.send(error);
+        console.log(error);
     }
 });
+
+//error agregando id cuando la coleccion esta vacia
+
+app.post('/submitServicio', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("servicio").doc();
+        response.set(RegistroData);
+        response.update({id: response.id});
+        const jsonid = {id: response.id};
+        res.send(jsonid);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.get('/selectServicios', async (req, res) => {
+    try{
+        const userRef = db.collection("servicio");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/selectServicio', async (req, res) => {
+    try{
+        const userRef = db.collection("servicio").doc(req.body.id);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
+
+app.post('/ActualizarServicio', async(req, res) =>{
+    try{
+        const userRef = await db.collection("servicio").doc(req.body.id)
+        .update({
+            nombre: req.body.nombre,
+            imagen1: req.body.imagen1,
+            imagen2: req.body.imagen2,
+            imagen3: req.body.imagen3,
+            estado: req.body.estado,
+            descripcion: req.body.descripcion,
+            beneficio: req.body.beneficio,
+            caracteristicas: req.body.caracteristicas
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarServicio', async(req, res) =>{
+    try{
+        console.log(req.body.nombre)
+        const response = await db.collection("servicio").doc(req.body.nombre).delete();
+        res.send(response)
+    }catch(error){
+        console.log("Malo:D"+error)
+        res.send(error);
+    }
+})
 
 app.get('/selectProductos', async (req, res) => {
     try{
@@ -339,20 +415,38 @@ app.get('/selectProductos', async (req, res) => {
     }
 })
 
+app.post('/selectProducto', async (req, res) => {
+    try{
+        const userRef = db.collection("producto").doc(req.body.id);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
+
 app.post('/ActualizarProducto', async(req, res) =>{
     try{
-        const nombre=req.body.nombre;
-        const userRef = await db.collection("producto").doc(nombre)
+        const userRef = await db.collection("producto").doc(req.body.id)
         .update({
             nombre: req.body.nombre,
             categoria: req.body.categoria,
             marca: req.body.marca,
-            imagen: req.body.imagen,
+            imagen1: req.body.imagen1,
+            imagen2: req.body.imagen2,
+            imagen3: req.body.imagen3,
             precio: req.body.precio,
+            precioventa: req.body.precioventa,
             cantidad: req.body.cantidad,
+            fecha: req.body.fecha,
+            estado: req.body.estado,
+            descripcion: req.body.descripcion,
+
         });
-        const response = await userRef.get();
-        res.send(response.data())
+
+        res.send(userRef);
     }catch(error){
         console.log("Malo"+error)
         res.send(error);
@@ -361,8 +455,9 @@ app.post('/ActualizarProducto', async(req, res) =>{
 
 app.post('/EliminarProducto', async(req, res) =>{
     try{
+        console.log(req.body.nombre)
         const response = await db.collection("producto").doc(req.body.nombre).delete();
-        res.send(response.data())
+        res.send(response)
     }catch(error){
         console.log("Malo:D"+error)
         res.send(error);
