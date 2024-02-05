@@ -209,7 +209,14 @@ app.post('/Actualizar', async(req, res) =>{
             ciudad: req.body.ciudad,
             fechanacimiento: req.body.fechanacimiento,
             genero: req.body.genero,
-            direccion: req.body.direccion
+            direccion: req.body.direccion,
+            estado: req.body.estado,
+            postal: req.body.postal,
+            nomtarjeta: req.body.nomtarjeta,
+            numtarjeta: req.body.numtarjeta,
+            fechaexp: req.body.fechaexp,
+            codseguridad: req.body.codseguridad,
+            tipotarjeta: req.body.tipotarjeta,
         });
         const response = await userRef.get();
         res.send(response.data())
@@ -463,3 +470,42 @@ app.post('/EliminarProducto', async(req, res) =>{
         res.send(error);
     }
 })
+
+app.post('/CrearCarrito', (req, res) => {
+    try{
+        const id = req.body.nombre;
+        const RegistroData = req.body;
+        console.log('Data received from frontend:', RegistroData);  
+        const response = db.collection("CarritoXUsuario").doc(id).set(RegistroData);
+        res.send(response);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/ActualizarCarrito', async(req, res) => {
+    try{
+        const userRef = await db.collection("CarritoXUsuario").doc(req.body.nombre)
+        .update({
+            nombre: req.body.nombre,
+            carrito: req.body.carrito,
+        });
+        res.send(userRef);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/CargarCarrito', async(req, res) => {
+    try{
+        const userRef = db.collection("CarritoXUsuario").doc(req.body.correo);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
