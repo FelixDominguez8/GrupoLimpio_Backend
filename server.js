@@ -509,3 +509,46 @@ app.post('/CargarCarrito', async(req, res) => {
         console.log(error);
     }
 });
+
+app.post('/ActualizarProducto2', async(req, res) =>{
+    try{
+        const userRef = await db.collection("producto").doc(req.body.id)
+        .update({
+            cantidad: req.body.cantidad,
+        });
+        console.log("LLego");
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo"+error)
+        res.send(error);
+    }
+})
+
+app.post('/CrearFactura', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("Facturas").doc();
+        response.set(RegistroData);
+        response.update({id: response.id});
+        res.send(response.data);
+        console.log("LLego2");
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/selectHistorial', async (req, res) => {
+    try{
+        const userRef = db.collection("Facturas").where("usuario", "==",req.body.correo);
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
