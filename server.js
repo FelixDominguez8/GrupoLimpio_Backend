@@ -10,7 +10,10 @@ const { getStorage, ref,getDownloadURL, uploadBytesResumable, uploadBytes, uploa
 const express = require("express");
 const multer = require("multer");
 
+const stripe = require('stripe')('sk_test_51OltjaF3zNKFoJUZnZH320rqGnFagNjozO0TwginLT2l3UX8rVulX8vi3SapT9C9049YtEgi5yUmiX6yPkA6PBB300pWFV3yO8');
+
 const puerto=3001;
+const YOUR_DOMAIN = 'https://grupolimpio-7b7cf.web.app';
 
 const app = express();
 
@@ -125,6 +128,7 @@ app.post('/submit', (req, res) => {
         res.send(response);
     }catch(error){
         res.send(error);
+        console.log(error);
     }
 });
 
@@ -206,17 +210,8 @@ app.post('/Actualizar', async(req, res) =>{
             apellido: req.body.apellido,
             id: req.body.id,
             telefono: req.body.telefono,
-            ciudad: req.body.ciudad,
             fechanacimiento: req.body.fechanacimiento,
             genero: req.body.genero,
-            direccion: req.body.direccion,
-            estado: req.body.estado,
-            postal: req.body.postal,
-            nomtarjeta: req.body.nomtarjeta,
-            numtarjeta: req.body.numtarjeta,
-            fechaexp: req.body.fechaexp,
-            codseguridad: req.body.codseguridad,
-            tipotarjeta: req.body.tipotarjeta,
         });
         const response = await userRef.get();
         res.send(response.data())
@@ -471,19 +466,6 @@ app.post('/EliminarProducto', async(req, res) =>{
     }
 })
 
-app.post('/CrearCarrito', (req, res) => {
-    try{
-        const id = req.body.nombre;
-        const RegistroData = req.body;
-        console.log('Data received from frontend:', RegistroData);  
-        const response = db.collection("CarritoXUsuario").doc(id).set(RegistroData);
-        res.send(response);
-    }catch(error){
-        res.send(error);
-        console.log(error);
-    }
-});
-
 app.post('/ActualizarCarrito', async(req, res) => {
     try{
         const userRef = await db.collection("CarritoXUsuario").doc(req.body.nombre)
@@ -531,7 +513,6 @@ app.post('/CrearFactura', (req, res) => {
         response.set(RegistroData);
         response.update({id: response.id});
         res.send(response.data);
-        console.log("LLego2");
     }catch(error){
         res.send(error);
         console.log(error);
@@ -551,4 +532,222 @@ app.post('/selectHistorial', async (req, res) => {
         res.send(error);
         console.log(error);
     }
+});
+
+app.post('/submitDirecciones', async(req, res) =>{
+    try{
+        const correo=req.body.correo;
+        const userRef = await db.collection("infousuario").doc(correo)
+        .update({
+            direcciones: req.body.direcciones
+        });
+        const response = await userRef.get();
+        res.send(response.data());
+
+    }catch(error){
+        res.send(error);
+    }
 })
+
+app.post('/submitTarjetas', async(req, res) =>{
+    try{
+        const correo=req.body.correo;
+        const userRef = await db.collection("infousuario").doc(correo)
+        .update({
+            tarjetas: req.body.tarjetas
+        });
+        const response = await userRef.get();
+        res.send(response.data());
+
+    }catch(error){
+        res.send(error);
+    }
+})
+
+app.post('/CrearRepartidor', (req, res) => {
+    try{
+        const id = req.body.correo;
+        const RegistroData = req.body;
+        const response = db.collection("repartidor").doc(id).set(RegistroData);
+        response.update({id: response.id});
+        const jsonid = {id: response.id};
+        res.send(jsonid);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+
+app.post('/create-checkout-session', async (req, res) => {
+    const product = await stripe.products.create({
+        name: 'T-shirt',
+      });
+      const product2 = await stripe.products.create({
+        name: 'Camisa',
+      });
+      const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: 2000,
+        currency: 'usd',
+      });
+      const price2 = await stripe.prices.create({
+        product: product2.id,
+        unit_amount: 2000,
+        currency: 'usd',
+      });
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: 'embedded',
+      line_items: [
+        {
+          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+          price: price.id,
+          quantity: 1,
+        },
+        {
+        // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+            price: price2.id,
+            quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
+    });
+  
+    res.send({clientSecret: session.client_secret});
+  });
+  
+  app.get('/session-status', async (req, res) => {
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+  
+    res.send({
+      status: session.status,
+      customer_email: session.customer_details.email
+    });
+  });
+
+app.get('/selectRepartidores', async (req, res) => {
+    try{
+        const userRef = db.collection("repartidor");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+});
+
+app.post('/selectRepartidor', async (req, res) => {
+    try{
+        const userRef = db.collection("repartidor").doc(req.body.id);
+        const response = await userRef.get();
+        console.log(response.data());
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/ActualizarRepartidor', async(req, res) =>{
+    try{
+        const userRef = await db.collection("repartidor").doc(req.body.id)
+        .update({
+            nombre: req.body.nombre,
+            numero_identidad: req.body.identidad,
+            fecha_nacimiento: req.body.fecha,
+            correo: req.body.correo,
+            telefono: req.body.telefono,
+            vehiculo: req.body.vehiculo,
+            placa: req.body.placa,
+            contra: req.body.contra,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarRepartidor', async(req, res) =>{
+    try{
+        console.log(req.body.nombre)
+        const response = await db.collection("repartidor").doc(req.body.nombre).delete();
+        res.send(response)
+    }catch(error){
+        console.log("Malo:D"+error)
+        res.send(error);
+    }
+})
+
+app.get('/selectFacturas', async (req, res) => {
+    try{
+        const userRef = db.collection("Facturas");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+});
+
+app.post('/CrearPedido', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("pedido").doc();
+        response.set(RegistroData);
+        response.update({id: response.id});
+        const jsonid = {id: response.id};
+        res.send(jsonid);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/ActualizarFactura', async(req, res) =>{
+    try{
+        const userRef = await db.collection("Facturas").doc(req.body.id)
+        .update({
+            estado_entrega: req.body.texto,
+        });
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo"+error)
+        res.send(error);
+    }
+})
+
+app.post('/selectPedidos', async (req, res) => {
+    try{
+        const userRef = db.collection("pedido").where("repartidor", "==", req.body.id);
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/selectPedidos2', async (req, res) => {
+    try{
+        const userRef = db.collection("Facturas").where("id", "==",req.body.id);
+        const response = await userRef.get();
+        console.log(response);
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
