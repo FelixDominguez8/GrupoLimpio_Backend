@@ -569,9 +569,7 @@ app.post('/CrearRepartidor', (req, res) => {
         const id = req.body.correo;
         const RegistroData = req.body;
         const response = db.collection("repartidor").doc(id).set(RegistroData);
-        response.update({id: response.id});
-        const jsonid = {id: response.id};
-        res.send(jsonid);
+        res.send(response);
     }catch(error){
         res.send(error);
         console.log(error);
