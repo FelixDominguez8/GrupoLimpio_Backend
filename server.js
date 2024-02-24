@@ -510,8 +510,9 @@ app.post('/CrearFactura', (req, res) => {
     try{
         const RegistroData = req.body;
         const response = db.collection("Facturas").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb
         response.set(RegistroData);
-        response.update({id: response.id});
         res.send(response.data);
     }catch(error){
         res.send(error);
@@ -742,8 +743,14 @@ app.post('/selectPedidos2', async (req, res) => {
     try{
         const userRef = db.collection("Facturas").where("id", "==",req.body.id);
         const response = await userRef.get();
-        console.log(response);
-        res.send(response.data());
+        const responseData = [];
+        response.forEach((doc) => {
+            // Extract data from each document
+            const data = doc.data();
+            responseData.push(data);
+        });
+        console.log(responseData);
+        res.send(responseData);
     } catch(error) {
         res.send(error);
         console.log(error);
