@@ -5,7 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { initializeApp } = require('firebase/app');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, 
-    updateEmail, updatePassword, sendEmailVerification, sendPasswordResetEmail} = require('firebase/auth');
+    updateEmail, updatePassword, sendEmailVerification, sendPasswordResetEmail, deleteUser} = require('firebase/auth');
 const { getStorage, ref,getDownloadURL, uploadBytesResumable, uploadBytes, uploadString} = require('firebase/storage');
 const express = require("express");
 const multer = require("multer");
@@ -123,7 +123,6 @@ app.post('/submit', (req, res) => {
     try{
         const id = req.body.correo;
         const RegistroData = req.body;
-        console.log('Data received from frontend:', RegistroData);  
         const response = db.collection("infousuario").doc(id).set(RegistroData);
         res.send(response);
     }catch(error){
@@ -165,6 +164,7 @@ app.post("/logIn",(req,res)=>{
     signInWithEmailAndPassword(auth, correo, password)
     .then((userCredential) => {
         const user = userCredential.user;
+        console.log(auth.currentUser);
         const responseData = { message: 'Holas'};
         res.json(responseData);
     })
@@ -183,7 +183,6 @@ app.post('/CargarPerfil', async (req, res) => {
     try{
         const userRef = db.collection("infousuario").doc(req.body.id);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -194,7 +193,6 @@ app.post('/CargarPerfilAdmin', async (req, res) => {
     try{
         const userRef = db.collection("infoadmin").doc(req.body.id);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -234,16 +232,19 @@ app.post("/ConfirmPassword", async(req,res)=>{
 app.post("/updatePassword", async(req,res)=>{
     const auth = getAuth();
     const user = auth.currentUser;
+    console.log(user);
     await db.collection("infousuario").doc(req.body.correo)
         .update({
             password: req.body.password
         });
     
     updatePassword(user, req.body.password).then(() => {
+        console.log("Contra");
         res.status(200).send({
             "msj":"contraseña actualizada",
         })
     }).catch((error) => {
+        console.log(error);
         res.status(500).send({
             "msj":"error actualizando la contraseña"
         })
@@ -252,20 +253,16 @@ app.post("/updatePassword", async(req,res)=>{
 
 app.post("/restorePassword", async(req,res) =>{
     const auth = getAuth();
-    console.log(req.body.correo);
-    console.log("Hola");
     sendPasswordResetEmail(auth, req.body.correo)
     .then(() => {
         res.status(200).send({
             "msg":"Todo bien",
         });
-        console.log("Correo enviado");
     })
     .catch((error) => {
         res.status(500).send({
             "msg":"Todo mal",
         });
-        console.log("Hola2");
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorMessage);
@@ -274,6 +271,7 @@ app.post("/restorePassword", async(req,res) =>{
 
 app.get("/logOut",(req,res)=>{
     const auth = getAuth();
+    console.log(auth.currentUser);
     signOut(auth).then(()=>{
         res.status(200).send({
             "msg":"log out",
@@ -290,7 +288,6 @@ app.post('/readAdmin', async (req, res) => {
     try{
         const userRef = db.collection("infoadmin").doc(req.body.correo);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -300,10 +297,8 @@ app.post('/readAdmin', async (req, res) => {
 app.post('/subirImagen', async (req,res) =>{
     try{
         const storage = getStorage();
-        console.log(req.body.imagen);
         const imagenRef = ref(storage, 'productos/A');
             uploadString(imagenRef, req.body.imagen,'data_url').then((snapshot) => {
-            console.log('Uploaded a raw string!');
         });
         // uploadBytes(imagenRef, req.body).then(() => {
         //     console.log('Imagen subida');
@@ -319,10 +314,10 @@ app.post('/submitProducto', (req, res) => {
     try{
         const RegistroData = req.body;
         const response = db.collection("producto").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
         response.set(RegistroData);
-        response.update({id: response.id});
-        const jsonid = {id: response.id};
-        res.send(jsonid);
+        res.send(RegistroData);
     }catch(error){
         res.send(error);
         console.log(error);
@@ -335,10 +330,10 @@ app.post('/submitServicio', (req, res) => {
     try{
         const RegistroData = req.body;
         const response = db.collection("servicio").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
         response.set(RegistroData);
-        response.update({id: response.id});
-        const jsonid = {id: response.id};
-        res.send(jsonid);
+        res.send(RegistroData);
     }catch(error){
         res.send(error);
         console.log(error);
@@ -363,7 +358,6 @@ app.post('/selectServicio', async (req, res) => {
     try{
         const userRef = db.collection("servicio").doc(req.body.id);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -387,14 +381,13 @@ app.post('/ActualizarServicio', async(req, res) =>{
 
         res.send(userRef);
     }catch(error){
-        console.log("Malo"+error)
+        console.log("Malo23"+error)
         res.send(error);
     }
 })
 
 app.post('/EliminarServicio', async(req, res) =>{
     try{
-        console.log(req.body.nombre)
         const response = await db.collection("servicio").doc(req.body.nombre).delete();
         res.send(response)
     }catch(error){
@@ -421,7 +414,6 @@ app.post('/selectProducto', async (req, res) => {
     try{
         const userRef = db.collection("producto").doc(req.body.id);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -450,18 +442,17 @@ app.post('/ActualizarProducto', async(req, res) =>{
 
         res.send(userRef);
     }catch(error){
-        console.log("Malo"+error)
+        console.log("Malo89"+error)
         res.send(error);
     }
 })
 
 app.post('/EliminarProducto', async(req, res) =>{
     try{
-        console.log(req.body.nombre)
         const response = await db.collection("producto").doc(req.body.nombre).delete();
         res.send(response)
     }catch(error){
-        console.log("Malo:D"+error)
+        console.log("Malo:D:D"+error)
         res.send(error);
     }
 })
@@ -484,7 +475,6 @@ app.post('/CargarCarrito', async(req, res) => {
     try{
         const userRef = db.collection("CarritoXUsuario").doc(req.body.correo);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     }catch(error){
         res.send(error);
@@ -498,10 +488,9 @@ app.post('/ActualizarProducto2', async(req, res) =>{
         .update({
             cantidad: req.body.cantidad,
         });
-        console.log("LLego");
         res.send(userRef);
     }catch(error){
-        console.log("Malo"+error)
+        console.log("Malooo"+error)
         res.send(error);
     }
 })
@@ -511,9 +500,9 @@ app.post('/CrearFactura', (req, res) => {
         const RegistroData = req.body;
         const response = db.collection("Facturas").doc();
         const idfb = response.id;
-        RegistroData.id = idfb
+        RegistroData.id = idfb;
         response.set(RegistroData);
-        res.send(response.data);
+        res.send(response);
     }catch(error){
         res.send(error);
         console.log(error);
@@ -643,7 +632,6 @@ app.post('/selectRepartidor', async (req, res) => {
     try{
         const userRef = db.collection("repartidor").doc(req.body.id);
         const response = await userRef.get();
-        console.log(response.data());
         res.send(response.data());
     } catch(error) {
         res.send(error);
@@ -667,18 +655,17 @@ app.post('/ActualizarRepartidor', async(req, res) =>{
 
         res.send(userRef);
     }catch(error){
-        console.log("Malo"+error)
+        console.log("Malo34"+error)
         res.send(error);
     }
 })
 
 app.post('/EliminarRepartidor', async(req, res) =>{
     try{
-        console.log(req.body.nombre)
         const response = await db.collection("repartidor").doc(req.body.nombre).delete();
         res.send(response)
     }catch(error){
-        console.log("Malo:D"+error)
+        console.log("Malo:D2"+error)
         res.send(error);
     }
 })
@@ -701,10 +688,10 @@ app.post('/CrearPedido', (req, res) => {
     try{
         const RegistroData = req.body;
         const response = db.collection("pedido").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
         response.set(RegistroData);
-        response.update({id: response.id});
-        const jsonid = {id: response.id};
-        res.send(jsonid);
+        res.send(response);
     }catch(error){
         res.send(error);
         console.log(error);
@@ -719,14 +706,28 @@ app.post('/ActualizarFactura', async(req, res) =>{
         });
         res.send(userRef);
     }catch(error){
-        console.log("Malo"+error)
+        console.log("Malolololo"+error);
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarFactura2', async(req, res) =>{
+    try{
+        const userRef = await db.collection("Facturas").doc(req.body.id)
+        .update({
+            repartidor: req.body.repartidor,
+            estado_entrega: req.body.texto
+        });
+        res.send(userRef);
+    }catch(error){
+        console.log("Malolololo"+error);
         res.send(error);
     }
 })
 
 app.post('/selectPedidos', async (req, res) => {
     try{
-        const userRef = db.collection("pedido").where("repartidor", "==", req.body.id);
+        const userRef = db.collection("Facturas").where("repartidor", "==", req.body.id);
         const response = await userRef.get();
         let responseArr = [];
         response.forEach(doc => {
@@ -749,10 +750,153 @@ app.post('/selectPedidos2', async (req, res) => {
             const data = doc.data();
             responseData.push(data);
         });
-        console.log(responseData);
         res.send(responseData);
     } catch(error) {
         res.send(error);
         console.log(error);
     }
 });
+
+app.post("/updatePassword2", async(req,res)=>{
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+    updatePassword(user, req.body.password).then(() => {
+        res.status(200).send({
+            "msj":"contraseña actualizada",
+        })
+    }).catch((error) => {
+        console.log(error);
+        res.status(500).send({
+            "msj":"error actualizando la contraseña"
+        })
+    });
+})
+
+app.post('/ActualizarRepartidor2', async(req, res) =>{
+    try{
+        const correo=req.body.correo;
+        const userRef = await db.collection("repartidor").doc(correo)
+        .update({
+            nombre: req.body.nombre,
+            vehiculo: req.body.vehiculo,
+            placa: req.body.placa,
+            telefono: req.body.telefono,
+            contra: req.body.contra
+        });
+        
+        res.send(userRef)
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+})
+
+app.post('/RepartidorXPedidos', async (req, res) => {
+    try{
+        const userRef = db.collection("pedido").where("orden", "==", req.body.id);
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/RepartidorXPedidos2', async (req, res) => {
+    try{
+        const userRef = db.collection("repartidor").where("correo", "==", req.body.id);
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/submitMarca', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("marca").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
+        response.set(RegistroData);
+        res.send(RegistroData);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.get('/selectMarcas', async (req, res) => {
+    try{
+        const userRef = db.collection("marca");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/selectMarca', async (req, res) => {
+    try{
+        const userRef = db.collection("marca").doc(req.body.id);
+        const response = await userRef.get();
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
+
+app.post('/ActualizarMarca', async(req, res) =>{
+    try{
+        const userRef = await db.collection("marca").doc(req.body.id)
+        .update({
+            nombre: req.body.nombre,
+            imagen1: req.body.imagen1,
+            descripcion: req.body.descripcion,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo23"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarMarca', async(req, res) =>{
+    try{
+        const response = await db.collection("marca").doc(req.body.nombre).delete();
+        res.send(response)
+    }catch(error){
+        console.log("Malo:D"+error)
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarProducto3', async(req, res) =>{
+    try{
+        const userRef = await db.collection("producto").doc(req.body.id)
+        .update({
+            carrusel: req.body.carrusel,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo89"+error)
+        res.send(error);
+    }
+})
