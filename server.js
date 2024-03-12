@@ -644,9 +644,7 @@ app.post('/ActualizarRepartidor', async(req, res) =>{
         const userRef = await db.collection("repartidor").doc(req.body.id)
         .update({
             nombre: req.body.nombre,
-            numero_identidad: req.body.identidad,
             fecha_nacimiento: req.body.fecha,
-            correo: req.body.correo,
             telefono: req.body.telefono,
             vehiculo: req.body.vehiculo,
             placa: req.body.placa,
@@ -897,6 +895,201 @@ app.post('/ActualizarProducto3', async(req, res) =>{
         res.send(userRef);
     }catch(error){
         console.log("Malo89"+error)
+        res.send(error);
+    }
+})
+
+app.get('/SelectIDFactura', async (req, res) => {
+    try{
+        const userRef = db.collection("ids").doc("idfactura");
+        const response = await userRef.get();
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/ActualizarIDFactura', async(req, res) =>{
+    try{
+        const userRef = await db.collection("ids").doc("idfactura")
+        .update({
+            id: req.body.id,
+        });
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo89"+error)
+        res.send(error);
+    }
+})
+
+app.get('/selectCarrusel', async (req, res) => {
+    try{
+        const userRef = db.collection("carrusel");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/submitCarrusel', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("carrusel").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
+        response.set(RegistroData);
+        res.send(RegistroData);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+
+app.post('/selectCarrusel2', async (req, res) => {
+    try{
+        const userRef = db.collection("carrusel").doc(req.body.id);
+        const response = await userRef.get();
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
+
+app.post('/ActualizarCarrusel', async(req, res) =>{
+    try{
+        const userRef = await db.collection("carrusel").doc(req.body.id)
+        .update({
+            imagen: req.body.imagen,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo23"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarCarrusel', async(req, res) =>{
+    try{
+        const response = await db.collection("carrusel").doc(req.body.nombre).delete();
+        res.send(response)
+    }catch(error){
+        console.log("Malo:D"+error)
+        res.send(error);
+    }
+})
+
+
+app.get('/selectCarrusel3', async (req, res) => {
+    try{
+        const userRef = db.collection("carrusel2");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
+        res.send(error);
+    }
+})
+
+app.post('/submitCarrusel2', (req, res) => {
+    try{
+        const RegistroData = req.body;
+        const response = db.collection("carrusel2").doc();
+        const idfb = response.id;
+        RegistroData.id = idfb;
+        response.set(RegistroData);
+        res.send(RegistroData);
+    }catch(error){
+        res.send(error);
+        console.log(error);
+    }
+});
+
+
+app.post('/selectCarrusel4', async (req, res) => {
+    try{
+        const userRef = db.collection("carrusel2").doc(req.body.id);
+        const response = await userRef.get();
+        res.send(response.data());
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+})
+
+app.post('/ActualizarCarrusel2', async(req, res) =>{
+    try{
+        const userRef = await db.collection("carrusel2").doc(req.body.id)
+        .update({
+            imagen: req.body.imagen,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo23"+error)
+        res.send(error);
+    }
+})
+
+app.post('/EliminarCarrusel2', async(req, res) =>{
+    try{
+        const response = await db.collection("carrusel2").doc(req.body.nombre).delete();
+        res.send(response)
+    }catch(error){
+        console.log("Malo:D"+error)
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarPagina1', async(req, res) =>{
+    try{
+        const userRef = await db.collection("pagina").doc("FotoTienda")
+        .update({
+            imagen: req.body.imagen,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo23"+error)
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarPagina2', async(req, res) =>{
+    try{
+        const userRef = await db.collection("pagina").doc("FotoTitulo")
+        .update({
+            imagen: req.body.imagen,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo23"+error)
+        res.send(error);
+    }
+})
+
+app.get('/selectPagina', async (req, res) => {
+    try{
+        const userRef = db.collection("pagina");
+        const response = await userRef.get();
+        let responseArr = [];
+        response.forEach(doc => {
+            responseArr.push(doc.data());
+        });
+        res.send(responseArr);
+    } catch(error) {
         res.send(error);
     }
 })
