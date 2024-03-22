@@ -572,11 +572,11 @@ app.post('/CrearRepartidor', (req, res) => {
 
 app.post('/create-checkout-session', async (req, res) => {
     const product = await stripe.products.create({
-        name: req.body.nombre,
+        name: 'Total',
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: req.body.precio,
+        unit_amount: 2000,
         currency: 'usd',
       });
     const session = await stripe.checkout.sessions.create({
@@ -585,7 +585,7 @@ app.post('/create-checkout-session', async (req, res) => {
         {
           // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
           price: price.id,
-          quantity: req.body.cantidad,
+          quantity: 1,
         },
       ],
       mode: 'payment',
