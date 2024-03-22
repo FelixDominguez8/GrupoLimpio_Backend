@@ -32,6 +32,9 @@ const db = admin.firestore();
 
 app.use(express.json({limit:'25mb'}));
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 app.use(express.urlencoded({limit:"25mb",extended: true}));
 
 app.use((req, res, next) => {
@@ -502,6 +505,7 @@ app.post('/CrearFactura', (req, res) => {
         const idfb = response.id;
         RegistroData.id = idfb;
         response.set(RegistroData);
+        console.log(":D");
         res.send(response);
     }catch(error){
         res.send(error);
@@ -569,14 +573,14 @@ app.post('/CrearRepartidor', (req, res) => {
 
 app.post('/create-checkout-session', async (req, res) => {
     const product = await stripe.products.create({
-        name: 'T-shirt',
+        name: 'Mas',
       });
       const product2 = await stripe.products.create({
         name: 'Camisa',
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 2000,
+        unit_amount: 3,
         currency: 'usd',
       });
       const price2 = await stripe.prices.create({
@@ -702,7 +706,9 @@ app.post('/ActualizarFactura', async(req, res) =>{
         .update({
             estado_entrega: req.body.texto,
         });
-        res.send(userRef);
+        const userRef2 = db.collection("Facturas").doc(req.body.id);
+        const response = await userRef2.get();
+        res.send(response.data());
     }catch(error){
         console.log("Malolololo"+error);
         res.send(error);
@@ -877,8 +883,10 @@ app.post('/ActualizarMarca', async(req, res) =>{
 
 app.post('/EliminarMarca', async(req, res) =>{
     try{
+        const userRef = db.collection("marca").doc(req.body.nombre);
+        const response2 = await userRef.get();
         const response = await db.collection("marca").doc(req.body.nombre).delete();
-        res.send(response)
+        res.send(response2.data());
     }catch(error){
         console.log("Malo:D"+error)
         res.send(error);
@@ -1093,3 +1101,69 @@ app.get('/selectPagina', async (req, res) => {
         res.send(error);
     }
 })
+
+app.post('/ActualizarMarca2', async(req, res) =>{
+    try{
+        const userRef = await db.collection("marca").doc(req.body.id)
+        .update({
+            carrusel: req.body.carrusel,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo89"+error)
+        res.send(error);
+    }
+})
+
+app.post('/ActualizarMarca3', async(req, res) =>{
+    try{
+        const userRef = await db.collection("marca").doc(req.body.id)
+        .update({
+            propia: req.body.propia,
+        });
+
+        res.send(userRef);
+    }catch(error){
+        console.log("Malo89"+error)
+        res.send(error);
+    }
+})
+
+app.post('/eliminarProductosXMarca', async (req, res) => {
+    try{
+        const response = db.collection("producto").where("marca", "==", req.body.marca).get()
+        .then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                doc.ref.delete()
+            });
+        });
+        console.log("Hecho")
+        res.send(response);
+    } catch(error) {
+        res.send(error);
+        console.log(error);
+    }
+});
+
+app.post('/api/v2/transaction/hosted/sandbox', (req, res) => {
+    // Aquí se obtienen los parámetros enviados en el cuerpo de la solicitud
+    const { _key, _callback, _cancel, _complete, _order_id, _order_date, _order_content, _order_extras, _currency, _tax_amount, _shipping_amount, _amount, _first_name, _last_name, _email, _address, _address_alt, _zip, _city, _state, _country, expired_at } = req.body;
+
+    // Aquí se realiza la validación de los campos según las especificaciones
+
+    // Luego puedes procesar los datos como desees, por ejemplo, enviar una respuesta JSON
+    res.json({ success: true, message: 'Datos recibidos correctamente' });
+});
+
+
+// Manejador para solicitudes GET (en caso de que sea necesario)
+app.get('/api/v2/transaction/hosted/sandbox', (req, res) => {
+    // Aquí se obtienen los parámetros enviados en la consulta de la URL
+    const { _key, _callback, _cancel, _complete, _order_id, _order_date, _order_content, _order_extras, _currency, _tax_amount, _shipping_amount, _amount, _first_name, _last_name, _email, _address, _address_alt, _zip, _city, _state, _country, expired_at } = req.query;
+
+    // Aquí se realiza la validación de los campos según las especificaciones
+
+    // Luego puedes procesar los datos como desees, por ejemplo, enviar una respuesta JSON
+    res.json({ success: true, message: 'Datos recibidos correctamente' });
+});
