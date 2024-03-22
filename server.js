@@ -570,35 +570,42 @@ app.post('/CrearRepartidor', (req, res) => {
     }
 });
 
-
 app.post('/create-checkout-session', async (req, res) => {
-    const { products } = req.body;
-  
-    const lineItems = await Promise.all(products.map(async (product) => {
-      const productObject = await stripe.products.create({
-        name: product.nombre,
+    const product = await stripe.products.create({
+        name: 'T-shirt',
       });
-      const priceObject = await stripe.prices.create({
-        product: productObject.id,
-        unit_amount: +product.precio*100,
+      const product2 = await stripe.products.create({
+        name: 'Camisa',
+      });
+      const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: 2000,
         currency: 'usd',
       });
-      return {
-        price: priceObject.id,
-        quantity: product.cantidad, // Use the quantity from request
-      };
-    }));
-  
+      const price2 = await stripe.prices.create({
+        product: product2.id,
+        unit_amount: 2000,
+        currency: 'usd',
+      });
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
-      line_items: lineItems,
+      line_items: [
+        {
+          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+          price: price.id,
+          quantity: 1,
+        },
+        {
+        // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+            price: price2.id,
+            quantity: 1,
+        },
+      ],
       mode: 'payment',
-      payment_method_types: ['card'],
-      success_url: `${YOUR_DOMAIN}/index.html`,
-      cancel_url: `${YOUR_DOMAIN}/index.html`,
+      return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
     });
   
-    res.send({ clientSecret: session.client_secret });
+    res.send({clientSecret: session.client_secret});
   });
   
   app.get('/session-status', async (req, res) => {
