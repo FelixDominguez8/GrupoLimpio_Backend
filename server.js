@@ -572,19 +572,11 @@ app.post('/CrearRepartidor', (req, res) => {
 
 app.post('/create-checkout-session', async (req, res) => {
     const product = await stripe.products.create({
-        name: 'T-shirt',
-      });
-      const product2 = await stripe.products.create({
-        name: 'Camisa',
+        name: req.body.nombre,
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 2000,
-        currency: 'usd',
-      });
-      const price2 = await stripe.prices.create({
-        product: product2.id,
-        unit_amount: 2000,
+        unit_amount: req.body.precio,
         currency: 'usd',
       });
     const session = await stripe.checkout.sessions.create({
@@ -593,16 +585,11 @@ app.post('/create-checkout-session', async (req, res) => {
         {
           // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
           price: price.id,
-          quantity: 1,
-        },
-        {
-        // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
-            price: price2.id,
-            quantity: 1,
+          quantity: req.body.cantidad,
         },
       ],
       mode: 'payment',
-      return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
+      return_url: `${YOUR_DOMAIN}/index.html`,
     });
   
     res.send({clientSecret: session.client_secret});
