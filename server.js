@@ -576,7 +576,7 @@ app.post('/create-checkout-session', async (req, res) => {
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 0,
+        unit_amount: 1000,
         currency: 'usd',
       });
     const session = await stripe.checkout.sessions.create({
