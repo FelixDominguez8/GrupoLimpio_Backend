@@ -589,7 +589,7 @@ app.post('/create-checkout-session', async (req, res) => {
         },
       ],
       mode: 'payment',
-      return_url: `${YOUR_DOMAIN}/index.html`,
+      return_url: `${YOUR_DOMAIN}/Admin.html`,
     });
   
     res.send({clientSecret: session.client_secret});
