@@ -572,11 +572,11 @@ app.post('/CrearRepartidor', (req, res) => {
 
 app.post('/create-checkout-session', async (req, res) => {
     const product = await stripe.products.create({
-        name: 'Total',
+        name: 'Envio',
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 2000,
+        unit_amount: 0,
         currency: 'usd',
       });
     const session = await stripe.checkout.sessions.create({
