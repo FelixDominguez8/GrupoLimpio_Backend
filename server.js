@@ -571,23 +571,23 @@ app.post('/CrearRepartidor', (req, res) => {
 });
 
 app.post('/create-checkout-session', async (req, res) => {
-    const product = await stripe.products.create({
-        name: 'Envio',
-      });
-      const price = await stripe.prices.create({
-        product: product.id,
-        unit_amount: 1000,
-        currency: 'usd',
-      });
+    const productsData = req.body.carro || [];; // Assuming the array of objects is sent in the request body
+    for(var i=0;i<productsData.length; i++){
+        console.log(productsData[i])
+    }
+    const lineItems = productsData.map(productData => ({
+        price_data: {
+            unit_amount: productData.precio * 100, // Convert price to cents
+            currency: 'usd',
+            product_data: {
+                name: productData.nombre
+            },
+        },
+        quantity: productData.cantidad,
+    }));
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
-      line_items: [
-        {
-          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
-          price: price.id,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: 'payment',
       return_url: `${YOUR_DOMAIN}/Admin.html`,
     });
